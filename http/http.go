@@ -26,8 +26,8 @@ const (
 	AppId     = "1001"
 )
 
-func buildPostData() {
-	SendData = map[string]string{
+func buildPostData() map[string]string{
+	return map[string]string{
 		"head":"",
 		"app_id":AppId,
 		"nonce": Md5(strconv.FormatInt(time.Now().Unix(),10)),
@@ -36,17 +36,17 @@ func buildPostData() {
 	}
 }
 
-func setPostData(key string, val string) {
-	SendData[key] = val
+func setPostData(SendData *map[string]string,key string, val string) {
+	(*SendData)[key] = val
 }
 
 func Exec(value string) bool {
-	buildPostData()
-	setPostData("data",value)
+	sendData := buildPostData()
+	setPostData(&sendData,"data",value)
 	sign := createSign()
-	setPostData("sign",sign)
+	setPostData(&sendData,"sign",sign)
 
-	res,err := post()
+	res,err := post(sendData)
 
 	if err != nil {
 		return false
@@ -81,9 +81,10 @@ func parseResult(value interface{}) (res map[string]string) {
 	return res
 }
 
-func post() (interface{},error) {
+func post(SendData map[string]string) (interface{},error) {
 	jsons , _ := json.Marshal(SendData)
 	requestBody := string(jsons)
+	fmt.Println(requestBody)
 	res, err := http.Post(config.Conf.C("api_host"), "application/json;charset=utf-8", bytes.NewBuffer([]byte(requestBody)))
 	if err != nil {
 		return nil,err
