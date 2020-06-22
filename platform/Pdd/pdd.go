@@ -43,8 +43,6 @@ func (o *OrderInfo) BuildData(orderStatus string) error{
 		}
 		end = include.Now()
 		// 获取订单
-		fmt.Println("jdp_pdd_order_trade")
-		fmt.Println("jdp_pdd_order_trade:type"+OrderStatus[orderStatus])
 		num , _ := model.Read(new(OrderTrade)).Filter("type", OrderStatus[orderStatus]).Filter("cid", shop.Cid).Filter("sid", shop.Sid).Filter("modified",">=",start).Filter("modified","<",end).GetAll(&trades)
 		o.SyncTime[shop.Sid] = start
 		o.AddOrUp[shop.Sid] = flag
@@ -61,18 +59,27 @@ func (o *OrderInfo) BuildData(orderStatus string) error{
 }
 
 func (o *OrderInfo) Send() bool {
-	jsons, err := json.Marshal(o.order)
-	order := string(jsons)
+	var order string
+	if len(o.order) > 0{
+		jsons, err := json.Marshal(o.order)
+
+		if err != nil {
+			return false
+		}
+
+		order  = string(jsons)
+	}
 
 	data := map[string]string {
 		"platform":"pdd",
 		"order_status":o.orderStatus,
 		"order_list":order,
 	}
+
+	jsons, err := json.Marshal(data)
 	if err != nil {
 		return false
 	}
-	jsons, err = json.Marshal(data)
 	go o.updateSyncTime()
 	return http.Exec(string(jsons))
 }

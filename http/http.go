@@ -43,9 +43,8 @@ func setPostData(SendData *map[string]string,key string, val string) {
 func Exec(value string) bool {
 	sendData := buildPostData()
 	setPostData(&sendData,"data",value)
-	sign := createSign()
+	sign := createSign(sendData)
 	setPostData(&sendData,"sign",sign)
-
 	res,err := post(sendData)
 
 	if err != nil {
@@ -84,7 +83,6 @@ func parseResult(value interface{}) (res map[string]string) {
 func post(SendData map[string]string) (interface{},error) {
 	jsons , _ := json.Marshal(SendData)
 	requestBody := string(jsons)
-	fmt.Println(requestBody)
 	res, err := http.Post(config.Conf.C("api_host"), "application/json;charset=utf-8", bytes.NewBuffer([]byte(requestBody)))
 	if err != nil {
 		return nil,err
@@ -102,7 +100,7 @@ func post(SendData map[string]string) (interface{},error) {
 	return result,nil
 }
 
-func createSign()(sign  string){
+func createSign(SendData map[string]string)(sign  string){
 	var contact []string
 	for key,val := range SendData {
 		contact = append(contact,key+val)

@@ -21,7 +21,6 @@ var (
 )
 
 func main() {
-	fmt.Println(include.Now())
 	var tree = map[string][3]*include.Data{
 		"pdd": {
 			{
@@ -106,7 +105,7 @@ func wait() {
 
 	waitStop()
 
-	<-time.After(time.Second * 1)
+	<-time.After(time.Minute * 2)
 
 	waitStop()
 }
