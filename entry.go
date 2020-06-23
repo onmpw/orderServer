@@ -76,7 +76,12 @@ func main() {
 }
 
 func start(v *include.Data) {
-
+	defer func(){
+		if e := recover(); e != nil {
+			fmt.Printf(v.Platform+"平台"+v.OrderStatus+"订单同步 ERROR:%v\n",e)
+			include.C <- 1
+		}
+	}()
 	err := v.OrderInfo.BuildData(v.OrderStatus)
 
 	if err != nil {
