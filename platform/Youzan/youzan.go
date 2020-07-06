@@ -59,18 +59,27 @@ func (o *OrderInfo) BuildData(orderStatus string) error{
 }
 
 func (o *OrderInfo) Send() bool {
-	jsons, err := json.Marshal(o.order)
-	order := string(jsons)
+	var order string
+	if len(o.order) > 0{
+		jsons, err := json.Marshal(o.order)
+
+		if err != nil {
+			return false
+		}
+
+		order  = string(jsons)
+	}
 
 	data := map[string]string {
-		"platform":"yz",
+		"platform":"youzan",
 		"order_status":o.orderStatus,
 		"order_list":order,
 	}
+
+	jsons, err := json.Marshal(data)
 	if err != nil {
 		return false
 	}
-	jsons, err = json.Marshal(data)
 	go o.updateSyncTime()
 	return http.Exec(string(jsons))
 }

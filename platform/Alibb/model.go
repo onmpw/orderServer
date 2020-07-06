@@ -11,10 +11,14 @@ type OrderTrade struct {
 	Sid 			int
 }
 
-func (o *OrderTrade) TableName() string {
-	return "jdp_alibb_order_trade"
+type OrderInfo struct {
+	order []*OrderTrade
+	orderStatus string
+	SyncTime map[int]string
+	AddOrUp	map[int]bool
+	SidToCid map[int]int
 }
 
-func (o *OrderTrade) GetData() string {
-	return ""
+func (o *OrderTrade) TableName() string {
+	return "jdp_alibb_order_trade"
 }

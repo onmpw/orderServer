@@ -6,6 +6,7 @@ import (
 	"github.com/onmpw/JYGO/config"
 	"github.com/onmpw/JYGO/model"
 	"orderServer/include"
+	"orderServer/platform/Alibb"
 	"orderServer/platform/Pdd"
 	"orderServer/platform/Youzan"
 	"os"
@@ -48,6 +49,58 @@ func main() {
 					SidToCid: make(map[int]int),
 				},
 			}},
+		"1688": {
+			{
+				Platform:    "1688",
+				OrderStatus: "WAIT_SELLER_SEND",
+				OrderInfo: &Alibb.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}, {
+				Platform:    "1688",
+				OrderStatus: "WAIT_BUYER_CONFIRM",
+				OrderInfo: &Alibb.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}, {
+				Platform:    "1688",
+				OrderStatus: "TRADE_SUCCESS",
+				OrderInfo: &Alibb.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}},
+		"youzan": {
+			{
+				Platform:    "youzan",
+				OrderStatus: "WAIT_SELLER_SEND",
+				OrderInfo: &Youzan.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}, {
+				Platform:    "youzan",
+				OrderStatus: "WAIT_BUYER_CONFIRM",
+				OrderInfo: &Youzan.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}, {
+				Platform:    "youzan",
+				OrderStatus: "TRADE_SUCCESS",
+				OrderInfo: &Youzan.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}},
 	}
 
 	handleSignal()
@@ -60,7 +113,6 @@ func main() {
 		now := time.Unix(time.Now().Unix(), 0).Format(include.DateTimeFormat)
 
 		num, _ := model.Read(new(include.ShopInfo)).Filter("is_delete", 0).Filter("end_date", ">", now).GetAll(&shopList)
-
 		if num > 0 {
 			include.ShopList = shopList
 			for _, val := range tree {
@@ -98,7 +150,7 @@ func ModelInit() {
 	flag.Parse()
 	_ = config.Init(*iniFile)
 	model.Init()
-	model.RegisterModel(new(Pdd.OrderTrade), new(include.ShopInfo), new(include.OrderThirdSyncTime),new(Youzan.OrderTrade))
+	model.RegisterModel(new(Pdd.OrderTrade), new(include.ShopInfo), new(include.OrderThirdSyncTime),new(Alibb.OrderTrade))
 }
 
 func wait() {
