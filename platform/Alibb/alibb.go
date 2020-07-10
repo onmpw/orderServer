@@ -82,7 +82,7 @@ func (o *OrderInfo) Send() bool {
 	if err != nil {
 		return false
 	}
-	go o.updateSyncTime()
+	o.updateSyncTime()
 	return http.Exec(string(jsons))
 }
 

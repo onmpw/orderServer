@@ -52,6 +52,7 @@ func (o *OrderInfo) BuildData(orderStatus string) error{
 		}
 
 		o.order = append(o.order,trades...)
+
 		o.getMaxTime(trades,shop.Sid)
 	}
 
@@ -64,6 +65,7 @@ func (o *OrderInfo) Send() bool {
 		jsons, err := json.Marshal(o.order)
 
 		if err != nil {
+			fmt.Printf("拼多多订单同步错误：%v",err)
 			return false
 		}
 
@@ -78,9 +80,10 @@ func (o *OrderInfo) Send() bool {
 
 	jsons, err := json.Marshal(data)
 	if err != nil {
+		fmt.Printf("拼多多订单同步错误：%v",err)
 		return false
 	}
-	go o.updateSyncTime()
+	o.updateSyncTime()
 	return http.Exec(string(jsons))
 }
 

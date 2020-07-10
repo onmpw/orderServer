@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/onmpw/JYGO/config"
 	"github.com/onmpw/JYGO/model"
+	_ "net/http/pprof"
 	"orderServer/include"
 	"orderServer/platform/Alibb"
 	"orderServer/platform/Pdd"
@@ -134,6 +135,7 @@ func start(v *include.Data) {
 			include.C <- 1
 		}
 	}()
+
 	err := v.OrderInfo.BuildData(v.OrderStatus)
 
 	if err != nil {
