@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"github.com/onmpw/JYGO/config"
 	"github.com/onmpw/JYGO/model"
-	_ "net/http/pprof"
+	"io/ioutil"
 	"orderServer/include"
 	"orderServer/platform/Alibb"
 	"orderServer/platform/Pdd"
 	"orderServer/platform/Youzan"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -20,6 +21,10 @@ var (
 	pid         = os.Getpid()
 	stop        = false
 	childFinish = false
+	gloPidFile string
+	ErrInfo = "{'errCode':%d,'errMsg':'%s'}"
+	ErrCode = 0
+	c = make(chan int,1)
 )
 
 func main() {
@@ -106,7 +111,9 @@ func main() {
 
 	handleSignal()
 
-	ModelInit()
+	if ! Init() {
+		return
+	}
 
 	for {
 		childFinish = false
@@ -147,12 +154,102 @@ func start(v *include.Data) {
 	include.C <- 1
 }
 
-func ModelInit() {
+func Init() bool{
 	var iniFile = flag.String("ini", "hello", "string类型参数")
+	var pidFile = flag.String("pf","./orderServer.pid","进程id存放路径")
 	flag.Parse()
-	_ = config.Init(*iniFile)
+	var r bool
+	err := config.Init(*iniFile)
+	if err != nil {
+		errMsg := fmt.Sprintf("初始化配置文件%s失败，错误：%v\n",*iniFile,err)
+		ErrCode = -3
+		errStr := fmt.Sprintf(ErrInfo,ErrCode,errMsg)
+		fmt.Println(errStr)
+		r = false
+	}
+	ModelInit()
+	r = ProcessInit(*pidFile)
+	return r
+}
+
+func ModelInit() {
 	model.Init()
 	model.RegisterModel(new(Pdd.OrderTrade), new(include.ShopInfo), new(include.OrderThirdSyncTime),new(Alibb.OrderTrade))
+}
+
+func ProcessInit(pidFile string) bool{
+	gloPidFile = pidFile
+	// 如果文件存在 则读取进程id看是否还在运行
+	if fileIsExist(pidFile){
+		fi, err := os.Open(pidFile)
+		if err != nil {
+			errMsg := fmt.Sprintf("打开文件%s失败，错误：%v",pidFile,err)
+			ErrCode = -1
+			errStr := fmt.Sprintf(ErrInfo,ErrCode,errMsg)
+			fmt.Println(errStr)  // -1 表示打开当前存放进程id的文件失败
+			return false
+		}
+		defer fi.Close()
+		fd, err := ioutil.ReadAll(fi)
+		currPid ,err:= strconv.Atoi(string(fd))
+
+		if err != nil {
+			errMsg := fmt.Sprintf("读取进程id失败，错误：%v",err)
+			ErrCode = -2
+			errStr := fmt.Sprintf(ErrInfo,ErrCode,errMsg)
+			fmt.Println(errStr)  // -2 表示从进程id存放文件中读取进程id，转换为整型失败
+			return false
+		}
+
+		// 判断进程是否有效
+		if checkProcess(currPid) {
+			// 进程依然有效，则终止服务再次开启
+			errMsg := fmt.Sprintf("服务正在运行，不能重复开启")
+			ErrCode = 1
+			errStr := fmt.Sprintf(ErrInfo,ErrCode,errMsg)
+			fmt.Println(errStr) // 1 表示重复开启服务
+			return false
+		}
+	}
+
+	err := ioutil.WriteFile(pidFile,[]byte(strconv.Itoa(pid)),0644)
+	if err != nil {
+		errMsg := fmt.Sprintf("进程id：%d 写文件%s失败，错误：%v",pid,pidFile,err)
+		ErrCode = 2
+		errStr := fmt.Sprintf(ErrInfo,ErrCode,errMsg)
+		fmt.Println(errStr) 	// 2 表示进程写文件失败
+		return false
+	}
+	return true
+}
+
+func checkProcess(pid int) bool{
+	processor,err := os.FindProcess(pid)
+	if err != nil {  // 无法找到pid对应的进程，认为进程无效
+		return false
+	}
+
+	err = processor.Signal(syscall.Signal(0))
+
+	if err != nil { // 进程无效
+		return false
+	}
+	return true
+}
+
+// fileIsExist 判断文件是否存在
+// @return true 存在
+// @return false 不存在
+func fileIsExist(file string) bool {
+	_, err := os.Stat(file)
+	if err != nil {
+		if os.IsExist(err) {
+			return true
+		}
+		return false
+	}
+
+	return true
 }
 
 func wait() {
@@ -169,19 +266,9 @@ func wait() {
 	waitStop()
 }
 
-func testFunc() {
-	for i := 0; i < 30; i++ {
-		fmt.Println(i)
-		<-time.After(time.Second * 1)
-	}
-
-	include.C <- 1
-}
-
 func handleSignal() {
-	//signal.Ignore(os.Interrupt)
-	//signal.Ignore(syscall.SIGHUP)
-
+	signal.Ignore(os.Interrupt)
+	signal.Ignore(syscall.SIGHUP)
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGTERM)
@@ -206,6 +293,8 @@ func killProcess() {
 		fmt.Println(err)
 		return
 	}
+
+	_ = os.Remove(gloPidFile)
 
 	_ = processor.Kill()
 }
