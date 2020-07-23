@@ -13,6 +13,7 @@ var OrderStatus = map[string]string {
 	"WAIT_SELLER_SEND":"waitsellersend",
 	"WAIT_BUYER_CONFIRM":"waitbuyerreceive",
 	"TRADE_SUCCESS":"success",
+	"TRADE_CANCEL":"cancel",
 }
 var platform = "A"
 

@@ -28,7 +28,7 @@ var (
 )
 
 func main() {
-	var tree = map[string][3]*include.Data{
+	var tree = map[string][4]*include.Data{
 		"pdd": {
 			{
 				Platform:    "pdd",
@@ -80,6 +80,14 @@ func main() {
 					AddOrUp:  make(map[int]bool),
 					SidToCid: make(map[int]int),
 				},
+			},{
+				Platform:    "1688",
+				OrderStatus: "TRADE_CANCEL",
+				OrderInfo: &Alibb.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
 			}},
 		"youzan": {
 			{
@@ -106,6 +114,14 @@ func main() {
 					AddOrUp:  make(map[int]bool),
 					SidToCid: make(map[int]int),
 				},
+			},{
+				Platform:    "youzan",
+				OrderStatus: "TRADE_CANCEL",
+				OrderInfo: &Youzan.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
 			}},
 	}
 
@@ -123,11 +139,15 @@ func main() {
 		num, _ := model.Read(new(include.ShopInfo)).Filter("is_delete", 0).Filter("end_date", ">", now).GetAll(&shopList)
 		if num > 0 {
 			include.ShopList = shopList
-			for _, val := range tree {
+			for key, val := range tree {
 
 				go start(val[0])
 				go start(val[1])
 				go start(val[2])
+
+				if key == "1688" || key=="youzan" {
+					go start(val[3])
+				}
 			}
 		}
 		wait()
