@@ -22,7 +22,3 @@ type OrderInfo struct {
 func (o *OrderTrade) TableName() string {
 	return "jdp_jd_order_trade"
 }
-
-func (o *OrderTrade) Connection() string {
-	return "jd_production"
-}

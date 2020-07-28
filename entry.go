@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"orderServer/include"
 	"orderServer/platform/Alibb"
+	"orderServer/platform/Jd"
 	"orderServer/platform/Pdd"
 	"orderServer/platform/Youzan"
 	"os"
@@ -123,6 +124,40 @@ func main() {
 					SidToCid: make(map[int]int),
 				},
 			}},
+		"jd": {
+			{
+				Platform:    "jd",
+				OrderStatus: "WAIT_SELLER_SEND",
+				OrderInfo: &Jd.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}, {
+				Platform:    "jd",
+				OrderStatus: "WAIT_BUYER_CONFIRM",
+				OrderInfo: &Jd.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}, {
+				Platform:    "jd",
+				OrderStatus: "TRADE_SUCCESS",
+				OrderInfo: &Jd.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			},{
+				Platform:    "jd",
+				OrderStatus: "TRADE_CANCEL",
+				OrderInfo: &Jd.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}},
 	}
 
 	handleSignal()
@@ -145,7 +180,7 @@ func main() {
 				go start(val[1])
 				go start(val[2])
 
-				if key == "1688" || key=="youzan" {
+				if key == "1688" || key=="youzan" || key == "jd" {
 					go start(val[3])
 				}
 			}

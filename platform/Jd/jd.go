@@ -3,9 +3,12 @@ package Jd
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/onmpw/JYGO/config"
 	"github.com/onmpw/JYGO/model"
 	"orderServer/http"
 	"orderServer/include"
+	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -14,7 +17,7 @@ var OrderStatus = map[string]string {
 	"WAIT_BUYER_CONFIRM":"WAIT_GOODS_RECEIVE_CONFIRM",
 	"TRADE_SUCCESS":"FINISHED_L",
 }
-var platform = "P"
+var platform = "J"
 
 func (o *OrderInfo) BuildData(orderStatus string) error{
 	var start string
@@ -42,8 +45,17 @@ func (o *OrderInfo) BuildData(orderStatus string) error{
 			flag = false  // false 表示记录不存在 需要新增
 		}
 		end = include.Now()
+
+		getParam := map[string]string{
+			"type":OrderStatus[orderStatus],
+			"cid": strconv.Itoa(shop.Cid),
+			"sid": strconv.Itoa(shop.Sid),
+			"startDate": start,
+			"endDate":end,
+		}
+		num,_ := getOrder(getParam,&trades)
 		// 获取订单
-		num , _ := model.Read(new(OrderTrade)).Filter("type", OrderStatus[orderStatus]).Filter("cid", shop.Cid).Filter("sid", shop.Sid).Filter("modified",">=",start).Filter("modified","<",end).GetAll(&trades)
+		//num , _ := model.Read(new(OrderTrade)).Filter("type", OrderStatus[orderStatus]).Filter("cid", shop.Cid).Filter("sid", shop.Sid).Filter("modified",">=",start).Filter("modified","<",end).GetAll(&trades)
 		o.SyncTime[shop.Sid] = start
 		o.AddOrUp[shop.Sid] = flag
 		o.SidToCid[shop.Sid] = shop.Cid
@@ -56,6 +68,47 @@ func (o *OrderInfo) BuildData(orderStatus string) error{
 	}
 
 	return nil
+}
+
+func getOrder(param map[string]string,models *[]*OrderTrade)(num int,err error ){
+	jsons, err := json.Marshal(param)
+	if err != nil {
+		fmt.Printf("京东订单同步错误：%v",err)
+		return 0,err
+	}
+
+	trades,_ := http.Get(string(jsons),"Provider\\OrderService@search",config.Conf.C("jd_api_host"))
+
+	*models = parseOrderList(trades)
+
+	return len(*models),err
+}
+
+func parseOrderList(value interface{}) (orderList []*OrderTrade) {
+	rv := reflect.ValueOf(value)
+
+	orderList = make([]*OrderTrade,rv.Len())
+	if rv.Kind() == reflect.Slice {
+		l := rv.Len()
+
+		for i:=0;i<l;i++ {
+			iv := reflect.Indirect(rv.Index(i))
+
+			r := iv.Interface().(map[string]interface{})
+
+			var trade = new(OrderTrade)
+			trade.Id = int(r["id"].(float64))
+			trade.Cid = int(r["cid"].(float64))
+			trade.Sid = int(r["sid"].(float64))
+			trade.Oid = r["oid"].(string)
+			trade.Response = r["response"].(string)
+			trade.Created = r["created"].(string)
+			trade.Modified = r["modified"].(string)
+			trade.Type = r["type"].(string)
+			orderList[i] = trade
+		}
+	}
+	return orderList
 }
 
 func (o *OrderInfo) Send() bool {
@@ -80,7 +133,7 @@ func (o *OrderInfo) Send() bool {
 	if err != nil {
 		return false
 	}
-	go o.updateSyncTime()
+	o.updateSyncTime()
 	return http.Exec(string(jsons))
 }
 
