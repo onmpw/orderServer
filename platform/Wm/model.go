@@ -11,6 +11,14 @@ type OrderTrade struct {
 	Sid 			int
 }
 
+type OrderInfo struct {
+	order []*OrderTrade
+	orderStatus string
+	SyncTime map[int]string
+	AddOrUp	map[int]bool
+	SidToCid map[int]int
+}
+
 func (o *OrderTrade) TableName() string {
 	return "jdp_weimob_order_trade"
 }

@@ -10,6 +10,7 @@ import (
 	"orderServer/platform/Alibb"
 	"orderServer/platform/Jd"
 	"orderServer/platform/Pdd"
+	"orderServer/platform/Wm"
 	"orderServer/platform/Youzan"
 	"os"
 	"os/signal"
@@ -153,6 +154,32 @@ func main() {
 				Platform:    "jd",
 				OrderStatus: "TRADE_CANCEL",
 				OrderInfo: &Jd.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}},
+		"wm": {
+			{
+				Platform:    "wm",
+				OrderStatus: "WAIT_SELLER_SEND",
+				OrderInfo: &Wm.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}, {
+				Platform:    "wm",
+				OrderStatus: "WAIT_BUYER_CONFIRM",
+				OrderInfo: &Wm.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}, {
+				Platform:    "wm",
+				OrderStatus: "TRADE_SUCCESS",
+				OrderInfo: &Wm.OrderInfo{
 					SyncTime: make(map[int]string),
 					AddOrUp:  make(map[int]bool),
 					SidToCid: make(map[int]int),

@@ -14,7 +14,7 @@ type OrderTradeContract interface {
 
 var (
 	ShopList []*ShopInfo
-	TypeNum           = 15
+	TypeNum           = 18
 
 	C = make(chan int, TypeNum) // channel 用于控制多协程
 
