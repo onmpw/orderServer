@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"orderServer/include"
 	"orderServer/platform/Alibb"
+	"orderServer/platform/Douyin"
 	"orderServer/platform/Jd"
 	"orderServer/platform/Pdd"
 	"orderServer/platform/Wm"
@@ -185,6 +186,40 @@ func main() {
 					SidToCid: make(map[int]int),
 				},
 			}},
+		"dy": {
+			{
+				Platform:    "dy",
+				OrderStatus: "WAIT_SELLER_SEND",
+				OrderInfo: &Douyin.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}, {
+				Platform:    "dy",
+				OrderStatus: "WAIT_BUYER_CONFIRM",
+				OrderInfo: &Douyin.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}, {
+				Platform:    "dy",
+				OrderStatus: "TRADE_SUCCESS",
+				OrderInfo: &Douyin.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			},{
+				Platform:    "youzan",
+				OrderStatus: "TRADE_CANCEL",
+				OrderInfo: &Douyin.OrderInfo{
+					SyncTime: make(map[int]string),
+					AddOrUp:  make(map[int]bool),
+					SidToCid: make(map[int]int),
+				},
+			}},
 	}
 
 	handleSignal()
@@ -256,7 +291,7 @@ func Init() bool{
 
 func ModelInit() {
 	model.Init()
-	model.RegisterModel(new(Pdd.OrderTrade), new(include.ShopInfo), new(include.OrderThirdSyncTime),new(Alibb.OrderTrade))
+	model.RegisterModel(new(Pdd.OrderTrade), new(include.ShopInfo), new(include.OrderThirdSyncTime),new(Alibb.OrderTrade),new(Wm.OrderTrade),new(Douyin.OrderTrade))
 }
 
 func ProcessInit(pidFile string) bool{
