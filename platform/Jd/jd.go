@@ -3,7 +3,6 @@ package Jd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/onmpw/JYGO/config"
 	"github.com/onmpw/JYGO/model"
 	"orderServer/http"
 	"orderServer/include"
@@ -25,6 +24,25 @@ func (o *OrderInfo) BuildData(orderStatus string) error{
 	var flag bool
 	o.orderStatus = orderStatus
 	o.order = o.order[0:0]
+
+	//var trades []*OrderTrade
+	//getParam := map[string]string{
+	//	"order_state":OrderStatus[orderStatus],
+	//	"cid": "143881",
+	//	"sid": "816287",
+	//	"start_date": "2020-04-02 01:58:51",
+	//	"end_date":"2020-04-02 15:58:51",
+	//}
+	//getParam := map[string]string{
+	//	"type":OrderStatus[orderStatus],
+	//	"cid": "143881",
+	//	"sid": "816287",
+	//	"startDate": "2020-04-02 01:58:51",
+	//	"endDate":"2020-04-02 15:58:51",
+	//}
+	//num,_ := getOrder(getParam,&trades)
+	//fmt.Println(trades)
+	//fmt.Println(num)
 	for _,shop := range include.ShopList {
 		var trades []*OrderTrade
 		if shop.Type != platform {
@@ -47,11 +65,11 @@ func (o *OrderInfo) BuildData(orderStatus string) error{
 		end = include.Now()
 
 		getParam := map[string]string{
-			"type":OrderStatus[orderStatus],
+			"order_state":OrderStatus[orderStatus],
 			"cid": strconv.Itoa(shop.Cid),
 			"sid": strconv.Itoa(shop.Sid),
-			"startDate": start,
-			"endDate":end,
+			"start_date": start,
+			"end_date":end,
 		}
 		num,_ := getOrder(getParam,&trades)
 		// 获取订单
@@ -77,7 +95,9 @@ func getOrder(param map[string]string,models *[]*OrderTrade)(num int,err error )
 		return 0,err
 	}
 
-	trades,_ := http.Get(string(jsons),"Provider\\OrderService@search",config.Conf.C("jd_api_host"))
+	//trades,_ := http.Get(string(jsons),"Provider\\OrderService@search",config.Conf.C("jd_api_host"))
+	// 改造为使用虎符方式
+	trades,_ := http.HuFuGet(string(jsons),"popOrderSearch")
 
 	*models = parseOrderList(trades)
 

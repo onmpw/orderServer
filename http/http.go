@@ -5,10 +5,13 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	core "git.jd.com/jcloud-api-gateway/jdcloud-apigateway-signature-go"
+	"github.com/gofrs/uuid"
 	"github.com/onmpw/JYGO/config"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"orderServer/HuFu"
 	"orderServer/include"
 	"reflect"
 	"sort"
@@ -69,6 +72,73 @@ func Exec(value string) bool {
 
 	return true
 
+}
+
+func HuFuGet(param string,api string)(interface{},error) {
+	obj := HuFu.New(api)
+	obj.BuildUrl()
+	obj.BuildBody(param)
+
+	// 创建带验证签名的虎符请求
+	req := createHuFuRequest(obj)
+
+	res,err := (&http.Client{Timeout:30*time.Second}).Do(req)
+
+	if err != nil {
+		fmt.Printf("虎符请求异常%v\n",err)
+		return nil,err
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Printf("读取结果异常%v\n",err)
+		return nil,err
+	}
+	var result = make(map[string]interface{})
+	err = json.Unmarshal(body,&result)
+
+	if err != nil {
+		fmt.Printf("解析异常%v\n",err)
+		return nil,err
+	}
+
+	if !ParseHuFuResult(result) {
+		fmt.Printf("服务返回结果异常: Code=%v,Msg=%v\n",result["code"],result["msg"])
+		return nil,fmt.Errorf("服务返回结果异常: Code=%v,Msg=%v\n",result["code"],result["msg"])
+	}
+
+	return decryptor(result["ext"].(string)),nil
+}
+
+// createHuFuRequest  创建带签名的虎符请求
+func createHuFuRequest(obj HuFu.HuFu) *http.Request {
+	req , _ := http.NewRequest("POST",obj.GetUrl(),strings.NewReader(obj.GetBody()))
+	// 创建虎符头部签名
+	nonce , _ := uuid.NewV4()
+	req.Header.Set(core.HeaderJdcloudNonce,nonce.String())
+	time := time.Now()
+	formattedTime := time.UTC().Format(core.TimeFormat)
+	req.Header.Set(core.HeaderJdcloudDate,formattedTime)
+	req.Header.Set("x-jdcloud-algorithm","JDCLOUD2-HMAC-SHA256")
+	req.Header.Set("x-jdcloud-Content-Sha256","UNSIGNED-PAYLOAD")
+	req.Header.Set("Content-Type","application/json")
+
+	Credential := *core.NewCredential(HuFu.AppKey,HuFu.AppSecret)
+	Logger := core.NewDefaultLogger(3)
+	signer := core.NewSigner(Credential,Logger)
+	sign,_ := signer.Sign(req.Host,obj.GetPath(),"POST",req.Header,HuFu.CreateQuery(obj.GetQuery()),obj.GetBody())
+
+	req.Header.Set(core.HeaderJdcloudAuthorization,sign)
+
+	return req
+}
+
+// ParseHuFuResult 解析虎符返回的结果是否正常
+func ParseHuFuResult(result map[string]interface{}) bool {
+	if result["code"] != "0000" {
+		return false
+	}
+	return true
 }
 
 func Get(param string,method string,host string) (interface{}, error) {
@@ -149,9 +219,7 @@ func decryptor(data string) interface{} {
 	setPostData(&sendData,"method","Provider\\DecryptService@decrypt")
 	sign := createSign(sendData)
 	setPostData(&sendData,"sign",sign)
-
 	res,err := get(sendData,config.Conf.C("api_host"),false)
-
 	if err != nil {
 		return nil
 	}

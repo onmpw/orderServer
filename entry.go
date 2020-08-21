@@ -212,7 +212,7 @@ func main() {
 					SidToCid: make(map[int]int),
 				},
 			},{
-				Platform:    "youzan",
+				Platform:    "dy",
 				OrderStatus: "TRADE_CANCEL",
 				OrderInfo: &Douyin.OrderInfo{
 					SyncTime: make(map[int]string),
@@ -242,7 +242,7 @@ func main() {
 				go start(val[1])
 				go start(val[2])
 
-				if key == "1688" || key=="youzan" || key == "jd" {
+				if key == "1688" || key=="youzan" || key == "jd" || key == "dy" {
 					go start(val[3])
 				}
 			}
