@@ -15,6 +15,7 @@ var OrderStatus = map[string]string {
 	"WAIT_SELLER_SEND":"WAIT_SELLER_STOCK_OUT",
 	"WAIT_BUYER_CONFIRM":"WAIT_GOODS_RECEIVE_CONFIRM",
 	"TRADE_SUCCESS":"FINISHED_L",
+	"TRADE_CANCEL":"LOCKED,TRADE_CANCELED",
 }
 var platform = "J"
 
@@ -144,7 +145,7 @@ func (o *OrderInfo) Send() bool {
 	}
 
 	data := map[string]string {
-		"platform":"pdd",
+		"platform":"jd",
 		"order_status":o.orderStatus,
 		"order_list":order,
 	}
